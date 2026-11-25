@@ -29,6 +29,18 @@ function bar(ctx, x, y, w, h, frac, fill, bg = '#3a2e22') {
   }
 }
 
+// Status words float over the light floor, so they sit on a dark pill.
+function textPill(ctx, text, x, y, fg = '#fff') {
+  ctx.font = 'bold 11px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  const tw = ctx.measureText(text).width + 18;
+  ctx.fillStyle = 'rgba(43,33,24,0.92)';
+  rr(ctx, x - tw / 2, y - 14, tw, 19, 9);
+  ctx.fill();
+  ctx.fillStyle = fg;
+  ctx.fillText(text, x, y);
+}
+
 function stationBase(ctx, s, highlight) {
   ctx.fillStyle = highlight ? '#ffe9a8' : '#b5793e';
   rr(ctx, s.x - 3, s.y - 3, s.w + 6, s.h + 6, 10);
@@ -74,6 +86,38 @@ export function render(ctx, state) {
   for (let y = 170; y < H; y += 46) {
     for (let x = ((y / 46) % 2) * 46; x < W; x += 92) ctx.fillRect(x, y, 44, 44);
   }
+  // Floor mat and potted plants dress up the open floor.
+  ctx.fillStyle = '#c98f5e';
+  rr(ctx, 300, 430, 360, 110, 14);
+  ctx.fill();
+  ctx.fillStyle = '#e8b07d';
+  rr(ctx, 312, 442, 336, 86, 10);
+  ctx.fill();
+  ctx.strokeStyle = '#b5793e';
+  ctx.lineWidth = 3;
+  rr(ctx, 330, 458, 300, 54, 8);
+  ctx.stroke();
+  ctx.fillStyle = '#8a5a24';
+  ctx.font = 'bold 16px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🍜  WARUNG KILAT  🍜', 480, 490);
+  for (const px of [70, 890]) {
+    ctx.fillStyle = '#c96f4a';
+    ctx.beginPath();
+    ctx.moveTo(px - 18, 540);
+    ctx.lineTo(px + 18, 540);
+    ctx.lineTo(px + 12, 566);
+    ctx.lineTo(px - 12, 566);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#4e9e57';
+    for (const [ox, oy, r] of [[-10, -8, 12], [8, -12, 13], [0, -22, 11]]) {
+      ctx.beginPath();
+      ctx.arc(px + ox, 540 + oy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   // Wall strip behind the top counters.
   ctx.fillStyle = '#2e6f5e';
   ctx.fillRect(0, 150, W, 20);
@@ -94,16 +138,10 @@ export function render(ctx, state) {
   if (k.board.item) {
     drawItemChip(ctx, k.board.item, 662, 196, 17);
     if (k.board.item.prep === 'raw') {
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('TAHAN SPASI', 662, 224);
-      bar(ctx, 622, 204, 80, 7, k.board.progress, '#ffd23e');
+      textPill(ctx, 'TAHAN SPASI', 662, 254);
+      bar(ctx, 622, 240, 80, 7, k.board.progress, '#ffd23e');
     } else {
-      ctx.fillStyle = '#b8ff9e';
-      ctx.font = 'bold 11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('SIAP ✓', 662, 224);
+      textPill(ctx, 'SIAP ✓', 662, 254, '#b8ff9e');
     }
   }
 
@@ -121,42 +159,26 @@ export function render(ctx, state) {
     if (w.item) {
       drawItemChip(ctx, w.item, cx, 200, 15);
       if (!w.done && w.item.prep !== 'burnt') {
-        bar(ctx, cx - 26, 226, 52, 7, w.progress, '#ff9d3c');
+        bar(ctx, cx - 26, 240, 52, 7, w.progress, '#ff9d3c');
       } else if (w.done) {
-        ctx.fillStyle = '#b8ff9e';
-        ctx.font = 'bold 12px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('MATANG!', cx, 228);
+        textPill(ctx, 'MATANG!', cx, 254, '#b8ff9e');
       } else if (w.item.prep === 'burnt') {
-        ctx.fillStyle = '#ff6b5e';
-        ctx.font = 'bold 12px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('GOSONG!', cx, 228);
+        textPill(ctx, 'GOSONG!', cx, 254, '#ff6b5e');
       }
     }
   });
 
   // Drink station.
   if (k.brew.active) {
-    bar(ctx, 348, 322, 80, 8, k.brew.progress, '#7ec8ff');
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 11px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('MENYEDUH…', 388, 352);
+    bar(ctx, 348, 312, 80, 8, k.brew.progress, '#7ec8ff');
+    textPill(ctx, 'MENYEDUH…', 388, 296);
   } else if (k.brew.ready) {
     drawItemChip(ctx, { type: 'teh', prep: 'ready' }, 388, 322, 16);
-    ctx.fillStyle = '#b8ff9e';
-    ctx.font = 'bold 11px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('SIAP ✓', 388, 352);
+    textPill(ctx, 'SIAP ✓', 388, 296, '#b8ff9e');
   }
 
   // Plating counter + plate on it.
   drawPlate(ctx, k.plateOnCounter, 162, 330);
-  ctx.fillStyle = '#f7e8c9';
-  ctx.font = '11px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(k.plateOnCounter.items.length ? 'Piring di meja' : 'Taruh bahan di sini', 162, 356);
 
   // Serving pass — glows when a matching plate is carried.
   const readyOrder = state.plateCarried ? findMatchingOrder(state.orders, state.plateCarried.items) : null;
